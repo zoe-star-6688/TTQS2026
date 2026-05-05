@@ -85,7 +85,10 @@ h1{font-size:18px;font-weight:600;color:#1a1a18;margin-bottom:4px}
 </head>
 <body>
 <div class="wrap">
-  <h1>TTQS 2026 申請進度管理</h1>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <h1>TTQS 2026 申請進度管理</h1>
+    <span id="sync-status" style="font-size:12px;color:#aaa">連線中...</span>
+  </div>
   <div class="sub">財團法人華岡興業基金會 ／ 目標送件：2026年8月底</div>
 
   <div class="stats">
@@ -161,6 +164,48 @@ h1{font-size:18px;font-weight:600;color:#1a1a18;margin-bottom:4px}
 </div>
 
 <script>
+const API = 'https://script.google.com/a/macros/g.hkxf.org/s/AKfycbyt-8f3-OShqfCh053gCUzDe4wlWxje2WHSjmT2RdfQ/dev';
+
+async function loadFromSheets() {
+  try {
+    const res = await fetch(API, {method:'GET', mode:'cors'});
+    const data = await res.json();
+    Object.entries(data).forEach(([key, val]) => {
+      const parts = key.split('_');
+      if(parts.length === 2) {
+        const pmI = parseInt(parts[0]);
+        const indId = isNaN(parts[1]) ? parts[1] : parseInt(parts[1]);
+        if(!isNaN(pmI) && pmI >= 0 && pmI <= 2) chk[pmI][indId] = val === true || val === 'true';
+      }
+    });
+    rsm(); rcl(curPM); rg();
+    setStatus('✓ 已載入最新進度', '#1D9E75');
+  } catch(e) {
+    setStatus('⚠ 離線模式（無法連線）', '#BA7517');
+  }
+}
+
+async function saveToSheets() {
+  setStatus('儲存中...', '#185FA5');
+  const payload = {};
+  [0,1,2].forEach(pmI => {
+    Object.entries(chk[pmI]).forEach(([indId, val]) => {
+      payload[pmI + '_' + indId] = val;
+    });
+  });
+  try {
+    await fetch(API, {method:'POST', mode:'cors', body: JSON.stringify(payload)});
+    setStatus('✓ 已儲存到雲端', '#1D9E75');
+  } catch(e) {
+    setStatus('⚠ 儲存失敗，請重試', '#E24B4A');
+  }
+}
+
+function setStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  if(el) { el.textContent = msg; el.style.color = color; }
+}
+
 const W=16;
 const phases=[
   {n:'計畫 Plan',s:'P',c:'#534AB7',bg:'#F0EFFE',tc:'#3C3489',inds:[
@@ -339,7 +384,7 @@ function rcl(pmI){
       const row=document.createElement('div');
       row.className='ind'+(done?' done':'');
       const cb=document.createElement('input');cb.type='checkbox';cb.className='icb';cb.checked=done;
-      cb.addEventListener('change',()=>{chk[pmI][ind.id]=cb.checked;rcl(pmI);rg();});
+      cb.addEventListener('change',()=>{chk[pmI][ind.id]=cb.checked;rcl(pmI);rg();saveToSheets();});
       const bd=document.createElement('div');
       const nm=document.createElement('div');nm.className='inm';nm.textContent=ind.n;
       const ds=document.createElement('div');ds.className='ids';ds.textContent='佐證文件：'+ind.d;
@@ -359,6 +404,7 @@ function rcl(pmI){
   });
 }
 rsm();rcl(0);
+loadFromSheets();
 
 // DRIVE TREE
 let treeStr='';
