@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTQS 2026 申請進度管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;font-size:14px;background:#f5f4f0;color:#1a1a18;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+h1{font-size:18px;font-weight:600;color:#1a1a18;margin-bottom:4px}
+.sub{font-size:13px;color:#888;margin-bottom:20px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.stat{background:#fff;border-radius:10px;padding:12px 14px;border:1px solid #e8e6e0}
+.stat-l{font-size:11px;color:#888;margin-bottom:3px}
+.stat-v{font-size:20px;font-weight:600;color:#1a1a18}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid #e0ddd5;margin-bottom:20px}
+.tab{padding:8px 16px;font-size:13px;cursor:pointer;border-radius:8px 8px 0 0;color:#888;border:1px solid transparent;margin-bottom:-1px;background:transparent;transition:all .15s}
+.tab.on{color:#1a1a18;border-color:#e0ddd5;border-bottom-color:#f5f4f0;background:#f5f4f0;font-weight:600}
+.pnl{display:none}.pnl.on{display:block}
+
+/* Gantt */
+.gh{display:grid;grid-template-columns:140px 50px 1fr;padding-bottom:8px;border-bottom:1px solid #e8e6e0;margin-bottom:12px}
+.gm{display:grid;grid-template-columns:repeat(4,1fr)}
+.gml{font-size:11px;color:#888;text-align:center;font-weight:500}
+.pmb{margin-bottom:18px}
+.pmh{display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid #e8e6e0;margin-bottom:10px}
+.pmbg{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
+.pminp{border:none;border-bottom:1px solid #e0ddd5;background:transparent;font-size:13px;font-weight:600;color:#1a1a18;outline:none;width:100px;padding:1px 4px}
+.pminp:focus{border-bottom-color:#534AB7}
+.gr{display:grid;grid-template-columns:140px 50px 1fr;align-items:center;margin-bottom:5px;min-height:24px}
+.gl{font-size:12px;color:#666;padding-right:6px;line-height:1.4}
+.gp{font-size:11px;color:#aaa;text-align:right;padding-right:8px;font-variant-numeric:tabular-nums}
+.gtl{position:relative;height:18px;display:flex;align-items:center}
+.gbar{position:absolute;height:15px;border-radius:4px;display:flex;align-items:center;padding:0 6px;overflow:hidden;transition:opacity .15s;cursor:default}
+.gbar:hover{opacity:.85}
+.gbt{font-size:10px;font-weight:600;color:rgba(255,255,255,.95);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gdm{position:absolute;width:10px;height:10px;transform:rotate(45deg);background:#E24B4A;z-index:2}
+
+/* Checklist */
+.smg{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.smc{background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:12px 14px}
+.smcn{font-size:11px;color:#888;margin-bottom:5px;display:flex;align-items:center;gap:6px}
+.smcv{font-size:22px;font-weight:700;color:#1a1a18}
+.pbw{background:#ece9e0;border-radius:4px;height:5px;overflow:hidden;margin-top:4px}
+.pbf{height:100%;border-radius:4px;transition:width .3s}
+
+.pbtabs{display:flex;gap:6px;margin-bottom:14px}
+.pbt{padding:5px 14px;font-size:12px;cursor:pointer;border-radius:6px;border:1px solid #e0ddd5;color:#888;background:#fff;transition:all .15s}
+.pbt.on{background:#1a1a18;color:#fff;border-color:#1a1a18;font-weight:600}
+
+.phb{margin-bottom:16px}
+.pht{font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ind{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:start;padding:9px 12px;border-radius:8px;margin-bottom:5px;border:1px solid #e8e6e0;background:#fff;transition:background .15s;cursor:pointer}
+.ind:hover{background:#faf9f5}
+.ind.done{background:#f5fdf8;border-color:#b8e8d0}
+.icb{width:15px;height:15px;cursor:pointer;margin-top:2px;accent-color:#0F6E56}
+.inm{font-size:13px;font-weight:600;color:#1a1a18;margin-bottom:3px}
+.ids{font-size:11px;color:#888;line-height:1.6}
+.idr{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.idot{width:8px;height:8px;border-radius:50%;margin-top:3px}
+.idbtn{font-size:11px;color:#185FA5;cursor:pointer;padding:3px 9px;border-radius:5px;border:1px solid #b5d4f4;background:#f0f6fd;white-space:nowrap}
+.idbtn:hover{background:#d0e8f8}
+
+/* Drive */
+.dinfo{background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:13px;color:#666;line-height:1.9}
+.dinfo strong{color:#1a1a18;font-weight:600}
+.dtree{font-family:'Courier New',monospace;font-size:12px;line-height:1.9;color:#666;background:#fff;border:1px solid #e8e6e0;border-radius:10px;padding:16px;margin-bottom:12px;white-space:pre;overflow-x:auto}
+.df{color:#1a1a18;font-weight:700}
+.cpbtn{font-size:12px;padding:7px 14px;border-radius:7px;border:1px solid #e0ddd5;background:#fff;color:#666;cursor:pointer;margin-bottom:16px;transition:all .15s}
+.cpbtn:hover{background:#f0eee8}
+.tipb{border:1px solid #e8e6e0;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#fff}
+.tipb h4{font-size:12px;font-weight:700;color:#1a1a18;margin-bottom:7px}
+.tipb p{font-size:12px;color:#666;line-height:1.8}
+.tipb p strong{color:#1a1a18;font-weight:600}
+
+.leg{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid #e8e6e0}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:#888}
+.ld{width:10px;height:10px;border-radius:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TTQS 2026 申請進度管理</h1>
+  <div class="sub">財團法人華岡興業基金會 ／ 目標送件：2026年8月底</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-l">送件截止</div><div class="stat-v">8月底</div></div>
+    <div class="stat"><div class="stat-l">評核指標</div><div class="stat-v">19項</div></div>
+    <div class="stat"><div class="stat-l">PM人數</div><div class="stat-v">3位</div></div>
+    <div class="stat"><div class="stat-l">剩餘週數</div><div class="stat-v" id="wl">-</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="st('gantt',this)">甘特圖</div>
+    <div class="tab" onclick="st('cl',this)">查檢清單</div>
+    <div class="tab" onclick="st('drive',this)">Google Drive 架構</div>
+  </div>
+
+  <!-- GANTT -->
+  <div class="pnl on" id="pnl-gantt">
+    <div class="gh">
+      <div style="font-size:11px;color:#aaa">任務</div>
+      <div style="font-size:11px;color:#aaa;text-align:right;padding-right:8px">完成率</div>
+      <div class="gm"><div class="gml">5月</div><div class="gml">6月</div><div class="gml">7月</div><div class="gml">8月</div></div>
+    </div>
+    <div id="gbody"></div>
+    <div class="leg">
+      <div class="li"><div class="ld" style="background:#534AB7"></div>計畫</div>
+      <div class="li"><div class="ld" style="background:#0F6E56"></div>設計</div>
+      <div class="li"><div class="ld" style="background:#185FA5"></div>執行</div>
+      <div class="li"><div class="ld" style="background:#BA7517"></div>查核</div>
+      <div class="li"><div class="ld" style="background:#993C1D"></div>成果</div>
+      <div class="li"><div class="ld" style="background:#888"></div>統籌</div>
+      <div class="li"><div style="width:10px;height:10px;transform:rotate(45deg);background:#E24B4A;display:inline-block"></div>里程碑</div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST -->
+  <div class="pnl" id="pnl-cl">
+    <div class="smg" id="smg"></div>
+    <div class="pbtabs">
+      <div class="pbt on" onclick="spm(0,this)">PM1</div>
+      <div class="pbt" onclick="spm(1,this)">PM2</div>
+      <div class="pbt" onclick="spm(2,this)">PM3</div>
+    </div>
+    <div id="clbody"></div>
+  </div>
+
+  <!-- DRIVE -->
+  <div class="pnl" id="pnl-drive">
+    <div class="dinfo">
+      建議在 Google Drive 建立以下資料夾結構。每位PM各自一個主資料夾，依PDDRO五大面向分子資料夾，每個指標再建子資料夾存放佐證文件。<br>
+      <strong>命名規則：</strong>指標編號_指標簡稱（如：01_訓練機構經營方向）<br>
+      <strong>查核方式：</strong>PM上傳文件後，統籌在Drive直接確認是否有檔、檔名是否符合規範。
+    </div>
+    <div class="dtree" id="dtree"></div>
+    <button class="cpbtn" onclick="cp()">複製資料夾結構文字</button>
+    <div class="tipb">
+      <h4>統籌查核建議流程</h4>
+      <p>
+        1. <strong>每2週 check-in：</strong>PM在查檢清單勾選完成項目，同步確認文件已上傳對應Drive資料夾。<br>
+        2. <strong>文件命名規範：</strong>指標編號_文件類型_版次（如：01_訓練政策文件_v1）<br>
+        3. <strong>7月底前：</strong>3位PM文件齊全，統籌做跨PM指標交叉檢查（同一指標3位PM是否都有佐證）。<br>
+        4. <strong>8月中：</strong>統籌彙整最終版，準備8月底送件。
+      </p>
+    </div>
+    <div class="tipb">
+      <h4>Google Drive 共用權限設定建議</h4>
+      <p>
+        各PM資料夾：本人 + 統籌 → <strong>編輯</strong>權限<br>
+        其他PM → <strong>檢視</strong>權限（可互相參考，避免重複準備）<br>
+        00_統籌彙整資料夾：僅統籌可編輯
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+const W=16;
+const phases=[
+  {n:'計畫 Plan',s:'P',c:'#534AB7',bg:'#F0EFFE',tc:'#3C3489',inds:[
+    {id:1,n:'指標1 訓練機構未來經營方向及目標',d:'策略地圖、目標市場需求調查、業務發展計畫（含人力資源訓練規劃方向）'},
+    {id:2,n:'指標2 對外明確的訓練政策',d:'年度訓練課程公告、訓練政策文件、EDM/海報/官網揭露'},
+    {id:3,n:'指標3 明確的PDDRO訓練課程及核心訓練類別',d:'訓練體系圖解、核心訓練類別說明、學員KPI文件'},
+    {id:4,n:'指標4 訓練品質管理的系統化文件資訊',d:'訓練手冊、TTQS管理系統文件、SOP、核准/公告/更新/保存紀錄'},
+    {id:5,n:'指標5 訓練規劃及經營目標的連結性',d:'年度事業計畫、訓練課程體系與業務策略連結說明'},
+    {id:6,n:'指標6 行政管理能力及訓練主管相關職能',d:'受訓證明、職能評估方法文件、訓練人員分工說明'},
+  ]},
+  {n:'設計 Design',s:'D',c:'#0F6E56',bg:'#E8F8F3',tc:'#085041',inds:[
+    {id:7,n:'指標7 訓練需求相關的職能分析及應用',d:'職能盤點/落差分析報告、課程設計進度表、訓練規劃書'},
+    {id:8,n:'指標8 訓練方案的系統設計',d:'課程計畫書、課程規劃會議紀錄、訓練評估方法文件'},
+    {id:9,n:'指標9 利益關係人的參與過程',d:'課程規劃書（含講師/學員/主管意見）、會議紀錄、訪談統計分析'},
+    {id:10,n:'指標10 訓練資源的採購程序及甄選標準',d:'師資遴選流程文件、採購/簽約/後續管理紀錄、廠商評估表'},
+    {id:11,n:'指標11 訓練計畫及目標需求的結合',d:'課程產出與訓練目標對照表、各課程單元達成說明、主管核定紀錄'},
+  ]},
+  {n:'執行 Do',s:'Do',c:'#185FA5',bg:'#EBF3FB',tc:'#0C447C',inds:[
+    {id:'12a',n:'指標12a 依據訓練目標遴選學員切合性',d:'學員遴選標準及資格文件、遴選流程、訓練管理委員會通過紀錄'},
+    {id:'12b',n:'指標12b 依據訓練目標選擇教材切合性',d:'教材評選流程、教材清單、委員會審查通過紀錄'},
+    {id:'12c',n:'指標12c 依據訓練目標遴選師資切合性',d:'師資遴選標準、聘書、委員會通過紀錄'},
+    {id:'12d',n:'指標12d 依據訓練目標選擇教學方法切合性',d:'教學方法說明、與訓練目標對照分析'},
+    {id:'12e',n:'指標12e 依據課程目標選擇教學環境與設備',d:'場地設備清單、安檢或場地投保證明、定期維護紀錄'},
+    {id:13,n:'指標13 提供學習成果移轉的建議或協助',d:'行動計畫、競賽/回訓/證照/實習紀錄、成果轉移連接性文件'},
+    {id:14,n:'指標14 訓練資料分類建檔及管理資訊系統化',d:'Myoffice系統截圖、文件建檔分類說明、查詢功能紀錄'},
+  ]},
+  {n:'查核 Review',s:'R',c:'#BA7517',bg:'#FDF3E3',tc:'#633806',inds:[
+    {id:15,n:'指標15 評估報告及定期性綜合分析',d:'訓後綜合檢討會議紀錄、結案報告（含財務/成果/改進）、改善追蹤報告'},
+    {id:16,n:'指標16 管控及異常矯正處理',d:'訓練流程管控方法及紀錄、異常處理紀錄、內外稽核流程及紀錄'},
+  ]},
+  {n:'成果 Outcome',s:'O',c:'#993C1D',bg:'#FAECE7',tc:'#4A1B0C',inds:[
+    {id:'17a',n:'指標17a 反應評估',d:'課後滿意度調查分析、學員/講師回饋紀錄、課程改善行動方案'},
+    {id:'17b',n:'指標17b 學習評估',d:'考試/實作紀錄、學員心得報告、結案報告書'},
+    {id:'17c',n:'指標17c 行為評估',d:'學員訓後動態調查表、行動計畫追蹤紀錄、主管評估表'},
+    {id:'17d',n:'指標17d 成果評估',d:'訓後調查表、就業及考照追蹤紀錄、感謝函、雇主問卷'},
+    {id:18,n:'指標18 目標客戶及學員的評價',d:'問卷調查分析、學員雷達圖、技能競賽獲獎、證照通過率統計'},
+    {id:19,n:'指標19 目標市場及顧客的價值創造',d:'三年KPI比較分析、人均訓練成本、就業率、每年訓練班次人次成長'},
+  ]},
+];
+
+const allInds=phases.flatMap(p=>p.inds);
+const total=allInds.length;
+const chk=[{},{},{}];
+const pmCfg=[
+  {l:'PM1',bg:'#E8E6FA',c:'#534AB7'},
+  {l:'PM2',bg:'#D0F2E5',c:'#0F6E56'},
+  {l:'PM3',bg:'#CCE3F5',c:'#185FA5'},
+];
+
+(function(){
+  const now=new Date(),dl=new Date('2026-08-31');
+  const w=Math.ceil((dl-now)/(7*24*3600*1000));
+  document.getElementById('wl').textContent=w>0?w+'週':'已截止';
+})();
+
+function pct(pmI,phase){
+  let d=0;phase.inds.forEach(ind=>{if(chk[pmI][ind.id])d++;});
+  return Math.round(d/phase.inds.length*100);
+}
+function pmPct(pmI){
+  let d=0;allInds.forEach(ind=>{if(chk[pmI][ind.id])d++;});
+  return Math.round(d/total*100);
+}
+
+function st(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('pnl-'+name).classList.add('on');
+  if(name==='gantt')rg();
+  if(name==='cl'){rsm();rcl(curPM);}
+  if(name==='drive')rdr();
+}
+
+// GANTT DATA
+const gdata=[
+  {l:'統籌',bg:'#E8E6E0',c:'#5F5E5A',tasks:[
+    {n:'文件現況盤點',b:{s:0,e:2},col:'#5F5E5A'},
+    {n:'進度追蹤（每2週）',b:{s:0,e:15},col:'#aaa'},
+    {n:'文件總審',b:{s:13,e:16},col:'#A32D2D'},
+  ],ms:[{w:16,l:'送件'}]},
+  {l:'PM1',bg:'#E8E6FA',c:'#534AB7',pi:0,tasks:[
+    {n:'計畫 Plan',b:{s:0,e:4},col:'#534AB7',ph:0},
+    {n:'設計 Design',b:{s:3,e:7},col:'#0F6E56',ph:1},
+    {n:'執行 Do',b:{s:6,e:10},col:'#185FA5',ph:2},
+    {n:'查核 Review',b:{s:9,e:12},col:'#BA7517',ph:3},
+    {n:'成果 Outcome',b:{s:11,e:13},col:'#993C1D',ph:4},
+    {n:'整合送審',b:{s:13,e:15},col:'#5F5E5A'},
+  ],ms:[{w:15,l:'交件'}]},
+  {l:'PM2',bg:'#D0F2E5',c:'#0F6E56',pi:1,tasks:[
+    {n:'計畫 Plan',b:{s:0,e:4},col:'#534AB7',ph:0},
+    {n:'設計 Design',b:{s:4,e:8},col:'#0F6E56',ph:1},
+    {n:'執行 Do',b:{s:7,e:11},col:'#185FA5',ph:2},
+    {n:'查核 Review',b:{s:10,e:12},col:'#BA7517',ph:3},
+    {n:'成果 Outcome',b:{s:11,e:13},col:'#993C1D',ph:4},
+    {n:'整合送審',b:{s:13,e:15},col:'#5F5E5A'},
+  ],ms:[{w:15,l:'交件'}]},
+  {l:'PM3',bg:'#CCE3F5',c:'#185FA5',pi:2,tasks:[
+    {n:'計畫 Plan',b:{s:0,e:5},col:'#534AB7',ph:0},
+    {n:'設計 Design',b:{s:4,e:8},col:'#0F6E56',ph:1},
+    {n:'執行 Do',b:{s:7,e:11},col:'#185FA5',ph:2},
+    {n:'查核 Review',b:{s:10,e:12},col:'#BA7517',ph:3},
+    {n:'成果 Outcome',b:{s:11,e:13},col:'#993C1D',ph:4},
+    {n:'整合送審',b:{s:13,e:15},col:'#5F5E5A'},
+  ],ms:[{w:15,l:'交件'}]},
+];
+
+function rg(){
+  const body=document.getElementById('gbody');body.innerHTML='';
+  gdata.forEach(pm=>{
+    const sec=document.createElement('div');sec.className='pmb';
+    const h=document.createElement('div');h.className='pmh';
+    const bg=document.createElement('span');bg.className='pmbg';
+    bg.style.background=pm.bg;bg.style.color=pm.c;bg.textContent=pm.l;
+    const inp=document.createElement('input');inp.className='pminp';inp.placeholder='輸入姓名';
+    h.appendChild(bg);h.appendChild(inp);sec.appendChild(h);
+    pm.tasks.forEach(task=>{
+      const p=task.ph!=null&&pm.pi!=null?pct(pm.pi,phases[task.ph]):null;
+      const row=document.createElement('div');row.className='gr';
+      const lbl=document.createElement('div');lbl.className='gl';lbl.textContent=task.n;
+      const pd=document.createElement('div');pd.className='gp';pd.textContent=p!=null?p+'%':'';
+      const tl=document.createElement('div');tl.className='gtl';
+      const bar=document.createElement('div');bar.className='gbar';
+      bar.style.left=(task.b.s/W*100)+'%';
+      bar.style.width=((task.b.e-task.b.s)/W*100)+'%';
+      bar.style.background=task.col;
+      const bt=document.createElement('span');bt.className='gbt';bt.textContent=task.n;
+      bar.appendChild(bt);tl.appendChild(bar);
+      if(pm.ms&&task===pm.tasks[pm.tasks.length-1]){
+        pm.ms.forEach(m=>{
+          const d=document.createElement('div');d.className='gdm';
+          d.style.left=((m.w-0.5)/W*100)+'%';d.title=m.l;tl.appendChild(d);
+        });
+      }
+      row.appendChild(lbl);row.appendChild(pd);row.appendChild(tl);
+      sec.appendChild(row);
+    });
+    body.appendChild(sec);
+  });
+}
+rg();
+
+// CHECKLIST
+let curPM=0;
+function spm(i,el){
+  curPM=i;
+  document.querySelectorAll('.pbt').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');rsm();rcl(i);
+}
+function rsm(){
+  const g=document.getElementById('smg');g.innerHTML='';
+  pmCfg.forEach((pm,i)=>{
+    const p=pmPct(i);
+    const done=allInds.filter(ind=>chk[i][ind.id]).length;
+    const c=document.createElement('div');c.className='smc';
+    c.innerHTML=`<div class="smcn"><span style="background:${pm.bg};color:${pm.c};font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px">${pm.l}</span></div><div class="smcv">${p}%</div><div class="pbw" style="margin-top:6px"><div class="pbf" style="width:${p}%;background:${pm.c}"></div></div><div style="font-size:11px;color:#aaa;margin-top:4px">${done}/${total}項完成</div>`;
+    g.appendChild(c);
+  });
+}
+function rcl(pmI){
+  rsm();
+  const body=document.getElementById('clbody');body.innerHTML='';
+  phases.forEach(ph=>{
+    const pp=pct(pmI,ph);
+    const blk=document.createElement('div');blk.className='phb';
+    const pt=document.createElement('div');pt.className='pht';
+    pt.style.background=ph.bg;pt.style.color=ph.tc;
+    pt.innerHTML=`<span>${ph.n}</span><span style="font-size:11px">${pp}% 完成</span>`;
+    blk.appendChild(pt);
+    const pbw=document.createElement('div');pbw.className='pbw';pbw.style.marginBottom='10px';
+    const pbf=document.createElement('div');pbf.className='pbf';
+    pbf.style.width=pp+'%';pbf.style.background=ph.c;
+    pbw.appendChild(pbf);blk.appendChild(pbw);
+    ph.inds.forEach(ind=>{
+      const done=!!chk[pmI][ind.id];
+      const row=document.createElement('div');
+      row.className='ind'+(done?' done':'');
+      const cb=document.createElement('input');cb.type='checkbox';cb.className='icb';cb.checked=done;
+      cb.addEventListener('change',()=>{chk[pmI][ind.id]=cb.checked;rcl(pmI);rg();});
+      const bd=document.createElement('div');
+      const nm=document.createElement('div');nm.className='inm';nm.textContent=ind.n;
+      const ds=document.createElement('div');ds.className='ids';ds.textContent='佐證文件：'+ind.d;
+      bd.appendChild(nm);bd.appendChild(ds);
+      const rt=document.createElement('div');rt.className='idr';
+      const dot=document.createElement('div');dot.className='idot';
+      dot.style.background=done?'#1D9E75':'#ccc';
+      const dbtn=document.createElement('button');dbtn.className='idbtn';dbtn.textContent='📁 Drive資料夾';
+      const iid=String(ind.id).padStart(2,'0');
+      const fnm=ind.n.replace(/指標\S+ /,'').substring(0,16);
+      dbtn.onclick=()=>alert('對應Drive資料夾名稱建議：\n'+iid+'_'+fnm+'\n\n請在PM對應的課程資料夾下建立此資料夾。');
+      rt.appendChild(dot);rt.appendChild(dbtn);
+      row.appendChild(cb);row.appendChild(bd);row.appendChild(rt);
+      blk.appendChild(row);
+    });
+    body.appendChild(blk);
+  });
+}
+rsm();rcl(0);
+
+// DRIVE TREE
+let treeStr='';
+function rdr(){
+  const dt=document.getElementById('dtree');
+  let t='';
+  t+='📁 TTQS_2026申請文件/\n';
+  t+='├── 📁 00_統籌彙整/\n';
+  t+='│   ├── 最終版申請文件/\n';
+  t+='│   └── 送件確認清單/\n';
+  pmCfg.forEach((pm,i)=>{
+    const pre=i<2?'├── ':'└── ';
+    const vt=i<2?'│   ':'    ';
+    t+=pre+'📁 '+pm.l+'_課程文件/\n';
+    phases.forEach((ph,pi)=>{
+      const lp=pi===phases.length-1;
+      t+=vt+(lp?'└── ':'├── ')+'📁 '+ph.s+'_'+ph.n.split(' ')[0]+'/\n';
+      ph.inds.forEach((ind,ii)=>{
+        const iid=String(ind.id).padStart(2,'0');
+        const nm=ind.n.replace(/指標\S+ /,'').substring(0,14);
+        const vt2=vt+(lp?'    ':'│   ');
+        const ip=ii===ph.inds.length-1?'└── ':'├── ';
+        t+=vt2+ip+'📁 '+iid+'_'+nm+'/\n';
+      });
+    });
+  });
+  dt.innerHTML=t.replace(/📁 ([^\n]+)\//g,'📁 <span class="df">$1/</span>');
+  treeStr=t;
+}
+rdr();
+
+function cp(){
+  navigator.clipboard.writeText(treeStr).then(()=>{
+    const b=document.querySelector('.cpbtn');
+    const o=b.textContent;b.textContent='✓ 已複製！';
+    setTimeout(()=>b.textContent=o,2000);
+  });
+}
+</script>
+</body>
+</html>
